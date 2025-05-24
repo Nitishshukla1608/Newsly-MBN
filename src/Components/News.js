@@ -7,9 +7,9 @@ export class New extends Component {
     this.state = {
       articles: [],
       loading: false,
-      page: 1, 
-      nextPage:1,
-      
+      page: 1,
+      nextPage: 1,
+      totalResults: 0,
     };
   }
 
@@ -18,45 +18,52 @@ export class New extends Component {
       "https://newsapi.org/v2/top-headlines?country=us&apiKey=63bfa758bc754de2ae35bf92983b9655&page=1&size=20";
     let data = await fetch(url);
     let parsedData = await data.json();
-    this.setState({ articles: parsedData.articles , totalResults : parsedData.totalResults});
+    this.setState({
+      articles: Array.isArray(parsedData.articles) ? parsedData.articles : [],
+      totalResults: parsedData.totalResults || 0,
+    });
   }
 
   handlePrevClick = async () => {
     console.log("Previous");
-    let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=63bfa758bc754de2ae35bf92983b9655&page=${this.state.page - 1}&size=20`;
+    let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=63bfa758bc754de2ae35bf92983b9655&page=${
+      this.state.page - 1
+    }&size=20`;
     let data = await fetch(url);
     let parsedData = await data.json();
     this.setState({
       page: this.state.page - 1,
-      articles: parsedData.articles,
+      articles: Array.isArray(parsedData.articles) ? parsedData.articles : [],
     });
   };
 
   handleNextClick = async () => {
     console.log("Next");
-    if( this.state.page+1 > Math.ceil(this.state.totalResults/20)){
-      
+    if (this.state.page + 1 > Math.ceil(this.state.totalResults / 20)) {
+      // Do nothing or you can disable next button here
+    } else {
+      let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=63bfa758bc754de2ae35bf92983b9655&page=${
+        this.state.page + 1
+      }&size=20`;
+      let data = await fetch(url);
+      let parsedData = await data.json();
+      this.setState({
+        page: this.state.page + 1,
+        articles: Array.isArray(parsedData.articles) ? parsedData.articles : [],
+      });
     }
-   else{
-     let url = `https://newsapi.org/v2/top-headlines?country=us&apiKey=63bfa758bc754de2ae35bf92983b9655&page=${this.state.page + 1}&size=20`;
-    let data = await fetch(url);
-    let parsedData = await data.json();
-    this.setState({
-      page: this.state.page + 1,
-      articles: parsedData.articles,
-    });
-   }
   };
 
   render() {
-
     return (
       <div className="container">
-        <h1 className="my-3" style={{color:"rgb(72, 91, 107)"}}>Newsly - Top Headlines</h1>
+        <h1 className="my-3" style={{ color: "rgb(72, 91, 107)" }}>
+          Newsly - Top Headlines
+        </h1>
 
         <div className="row">
-          {this.state.articles.map((element) => {
-            const { title, description, urlToImage, url , totalResults } = element;
+          {(this.state.articles || []).map((element) => {
+            const { title, description, urlToImage, url } = element;
             return (
               <div className="col-md-3" key={url}>
                 <NewsItem
@@ -83,14 +90,15 @@ export class New extends Component {
             &larr; Previous
           </button>
 
-<h6>{this.state.page}</h6>
+          <h6>{this.state.page}</h6>
 
           <button
-          
             type="button"
             className="btn btn-dark"
             onClick={this.handleNextClick}
-        
+            disabled={
+              this.state.page >= Math.ceil(this.state.totalResults / 16)
+            }
           >
             Next &rarr;
           </button>
